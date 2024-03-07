@@ -1,0 +1,108 @@
+streamlit==0.97.1
+pandas==1.3.3
+Pillow==8.4.0
+google-generativeai==0.4.1
+
+
+pip install google-generativeai streamlit
+AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8
+
+
+
+import streamlit as st
+import pandas as pd
+from PIL import Image
+import google.generativeai as genai
+
+# Set your API key
+api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+
+# Configure the generativeai module with the obtained API key for authentication
+genai.configure(api_key=api_key)
+
+# Create an instance of the GenerativeModel class with the model name 'gemini-pro-vision'
+model = genai.GenerativeModel('gemini-pro-vision')
+
+# Streamlit app
+def main():
+    st.title("Image Text Extraction and Excel Export")
+
+    # Upload image through Streamlit
+    uploaded_image = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+    if uploaded_image is not None:
+        # Open the uploaded image using the Pillow library
+        image_pil = Image.open(uploaded_image)
+
+        # Display the uploaded image
+        st.image(image_pil, caption="Uploaded Image", use_column_width=True)
+
+        # A text prompt describing the task to be performed on the provided image
+        prompt = """
+        Extract information from the image regarding Basic Terms, including:
+        - Date Announced
+        - Actual Completion Date
+        - Type of Consideration
+        - Consideration Terms
+        - Financing Condition
+        - Jurisdiction
+        - Initial Expected Completion Timeline
+        - Industry
+        - Marketing Period
+        - Go-Shop
+        """
+
+        # Generate content using the Google Gemini Vision Pro API, passing the prompt and the uploaded image in Pillow format
+        with st.spinner("Generating Text..."):
+            response = model.generate_content([prompt, image_pil])
+
+        # Resolve the response to obtain the generated text
+        with st.spinner("Resolving Response..."):
+            response.resolve()
+
+        # Access the text from parts
+        parts = response.candidates[0].content.parts
+
+        # Example: Extract relevant information dynamically from API response
+        extracted_info = extract_information(parts)
+
+        # Organize data into a DataFrame
+        df = pd.DataFrame([extracted_info])
+
+        # Save the DataFrame to an Excel file
+        st.markdown("### Export to Excel")
+        st.write(df)
+        st.button("Export to Excel", on_click_export, args=(df,))
+
+def extract_information(parts):
+    # Add your custom logic to extract information from the text parts
+    # This is a basic example, you may need to use regular expressions or other techniques
+    extracted_info = {
+        "Date Announced": get_value(parts, "Date Announced"),
+        "Actual Completion Date": get_value(parts, "Actual Completion Date"),
+        "Type of Consideration": get_value(parts, "Type of Consideration"),
+        "Consideration Terms": get_value(parts, "Consideration Terms"),
+        "Financing Condition": get_value(parts, "Financing Condition"),
+        "Jurisdiction": get_value(parts, "Jurisdiction"),
+        "Initial Expected Completion Timeline": get_value(parts, "Initial Expected Completion Timeline"),
+        "Industry": get_value(parts, "Industry"),
+        "Marketing Period": get_value(parts, "Marketing Period"),
+        "Go-Shop": get_value(parts, "Go-Shop"),
+    }
+
+    return extracted_info
+
+def get_value(parts, term):
+    # Helper function to extract value for a specific term from the text parts
+    for part in parts:
+        if term in part.text:
+            return part.text.replace(term, "").strip()
+
+    return ""
+
+def on_click_export(df):
+    df.to_excel("output.xlsx", index=False)
+    st.success("Data exported to Excel successfully!")
+
+if __name__ == "__main__":
+    main()
