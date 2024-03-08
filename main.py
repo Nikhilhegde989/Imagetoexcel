@@ -750,7 +750,7 @@ def extract_specific_information(extracted_text):
         return None
 
 def extract_images_and_process(file):
-    extracted_info_df = pd.DataFrame(columns=["Sheet", "Image", "Extracted_Text", "Extracted_Specific_Info"])
+    extracted_info_list = []
 
     try:
         with zipfile.ZipFile(file, 'r') as zip_ref:
@@ -768,13 +768,13 @@ def extract_images_and_process(file):
                         extracted_text = extract_text_from_image(img)
                         extracted_specific_info = extract_specific_information(extracted_text)
 
-                        # Append the information to the DataFrame
-                        extracted_info_df = extracted_info_df.append({
+                        # Append the information to the list as a dictionary
+                        extracted_info_list.append({
                             "Sheet": sheet_name,
                             "Image": image_file,
                             "Extracted_Text": extracted_text,
                             "Extracted_Specific_Info": extracted_specific_info
-                        }, ignore_index=True)
+                        })
 
                         st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
 
@@ -789,6 +789,7 @@ def extract_images_and_process(file):
                 else:
                     st.warning(f"Number of sheets is less than the number of images.")
 
+        extracted_info_df = pd.DataFrame(extracted_info_list)  # Convert the list to a DataFrame
         return extracted_info_df  # Return the DataFrame
 
     except Exception as e:
@@ -816,9 +817,8 @@ def get_binary_data(data, file_name="output_extracted_info.xlsx"):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         data.to_excel(writer, sheet_name='Extracted_Information', index=False)
-        writer.save()
+    output.seek(0)
     return output.getvalue(), file_name
-
 
 def main():
     st.title("Excel Image and Information Extractor")
