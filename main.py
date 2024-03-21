@@ -1738,6 +1738,433 @@
 #     main()
 
 
+
+
+
+
+# import streamlit as st
+# import zipfile
+# from PIL import Image
+# import openpyxl
+# import os
+# import io
+# import base64
+# import pandas as pd
+# import google.generativeai as genai
+
+# # Set your API keys for Google Gemini Vision Pro
+# gemini_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+
+# genai.configure(api_key=gemini_api_key)
+# vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
+
+# # Declare image_sheet_mapping as a global variable
+# image_sheet_mapping = {}
+
+# def extract_image_from_zip(zip_ref, image_file):
+#     image_data = zip_ref.read(image_file)
+#     return Image.open(io.BytesIO(image_data))
+
+# def extract_text_from_image(img):
+#     vision_pro_prompt = """
+#     Extract text from the image following these guidelines:
+# - The table should contain three columns: 'Antitrust', 'SEC', and 'All Other Terms'.
+# - Each cell definately contain | eventname & date |
+# - Each row should consist of pairs of event names and dates, separated by '|' within each column.
+# - If an event name or date is missing, leave the cell blank (use '| |' to represent an empty cell).
+# - Example format:
+#     |Antitrust          |SEC                  |All Other Terms             |
+#     |event_name1 date1  |event_name2 date2    |event_name3 date3          |
+#     |event_name4 date4  |                     |event_name5 date5          |
+#     |                    |event_name6 date6    |event_name7 date7          |
+#     |event_name8 date8  |event_name9 date9    |                           |
+#     |                    |                     |event_name10 date10        |
+#     |event_name11 date11|                     |                           |
+#     """ 
+#     with st.spinner("Extracting Text From The Image..."):
+#         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
+#         print(vision_pro_response)
+
+#     try:
+#         vision_pro_response.resolve()
+#         extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
+#         print(extracted_text)
+#         return extracted_text
+#     except Exception as e:
+#         st.error(f"Error extracting text from image: {e}")
+#         return None
+
+# def extract_images_and_process(file, current_sheet):
+#     try:
+#         with zipfile.ZipFile(file, 'r') as zip_ref:
+#             media_folder = 'xl/media/'
+#             image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
+
+#             # Create the "images" subfolder if it doesn't exist
+#             os.makedirs("images", exist_ok=True)
+
+#             with pd.ExcelWriter("output_extracted_info.xlsx", engine='openpyxl') as writer:
+#                 for i, image_file in enumerate(image_files):
+#                     if i < len(current_sheet):  # Check if there are enough sheets for the images
+#                         sheet_name = current_sheet[i]
+
+#                         try:
+#                             img = extract_image_from_zip(zip_ref, image_file)
+#                             extracted_text = extract_text_from_image(img)
+
+#                             # Split extracted text into rows and columns
+#                             rows = extracted_text.split('\n')
+#                             data = []
+#                             for row in rows:
+#                                 if row.strip():  # Check if the row is not empty
+#                                     columns = row.split('|')[1:-1]  # Remove first and last empty items
+#                                     if len(columns) == 3:  # Ensure the correct number of columns
+#                                         data.append(columns)
+#                                     else:
+#                                         st.warning(f"Skipping row with incorrect number of columns: {row}")
+
+
+#                             # Write the DataFrame to a separate sheet in the Excel file
+#                             if data:
+#                                 extracted_info_df = pd.DataFrame(data, columns=["Antitrust", "SEC", "All Other Terms"])
+#                                 extracted_info_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+#                                 # Insert the image into the Excel sheet at a specific location
+#                                 sheet = writer.sheets[sheet_name]
+#                                 img_ref = openpyxl.drawing.image.Image(f"images/{image_file.split('/')[-1]}")
+#                                 sheet.add_image(img_ref, 'F1')  # Adjust the location as needed
+
+#                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
+#                                 st.write("Extracted Text:")
+#                                 st.write(extracted_text)
+#                             else:
+#                                 st.warning("No valid data extracted from the image.")
+
+#                         except Exception as e:
+#                             st.error(f"Error processing sheet {sheet_name}: {e}")
+#                     else:
+#                         st.warning(f"Number of sheets is less than the number of images.")
+
+#             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
+
+#             # Provide a download link for the updated Excel file
+#             st.markdown(get_download_link("output_extracted_info.xlsx"), unsafe_allow_html=True)
+#     except Exception as e:
+#         st.error(f"Error: {e}")
+
+# def get_sheet_names_from_excel(file):
+#     try:
+#         xls = pd.ExcelFile(file)
+#         sheet_names = xls.sheet_names
+#         return sheet_names
+#     except Exception as e:
+#         st.error(f"Error getting sheet names: {e}")
+#         return None
+
+# def get_download_link(file_path):
+#     with open(file_path, "rb") as f:
+#         file_content = f.read()
+#     return f'<a href="data:application/octet-stream;base64,{base64.b64encode(file_content).decode()}" download="{file_path}">Download Excel File</a>'
+
+# def main():
+#     st.title("Excel Image and Information Extractor")
+#     file = st.file_uploader("Upload Excel file", type=["xlsx", "xls", "zip"])
+
+#     if file is not None:
+#         current_sheet = get_sheet_names_from_excel(file)
+#         extract_images_and_process(file, current_sheet)
+        
+# if __name__ == "__main__":
+#     main()
+
+
+
+
+# import streamlit as st
+# import zipfile
+# from PIL import Image
+# import openpyxl
+# import os
+# import io
+# import base64
+# import pandas as pd
+# import google.generativeai as genai
+
+# # Set your API keys for both Google Gemini Vision Pro and Google Gemini
+# gemini_vision_pro_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+# gemini_pro_api_key = "Your_Gemini_Pro_API_Key"
+
+# # Configure Gemini APIs
+# genai.configure(api_key=gemini_vision_pro_api_key)
+# vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
+# gemini_model = genai.GenerativeModel('gemini-pro')
+
+# def extract_text_from_image(img):
+#     vision_pro_prompt = "Extract text from the provided image."
+#     with st.spinner("Extracting Text From The Image..."):
+#         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
+
+#     try:
+#         vision_pro_response.resolve()
+#         extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
+#         st.write("Extracted Text:", extracted_text)  # Print extracted text in the frontend
+#         return extracted_text
+#     except Exception as e:
+#         st.error(f"Error extracting text from image: {e}")
+#         return None
+
+# def extract_specific_information(extracted_text):
+#     try:
+#         gemini_prompt = """
+#             From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'. consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
+#             find a date. Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
+#             Each item should be a string & in each item event name & date should be separated by a colon ':'
+#             example:if the Extracted Text: Regulatory Timeline & Events Antitrust SEC All Other Items ACC SH Approval 08/04/2022 
+#             Walk Date 10/18/2022 Definitive Filed 06/16/2022 Expected Close 08/09/2022 Preliminary Proxy Filed 05/10/2022.
+#             response should be like this, ['ACC SH Approval:08-04-2022','Walk Date:10/18/2022','Definitive Filed:06/16/2022','Expected Close:08/09/2022'....]
+#             """
+#         with st.spinner("Extracting Specific Information From The Text ..."):
+#             gemini_response = gemini_model.generate_content([gemini_prompt, extracted_text])
+#             print(gemini_response.candidates[0].content.parts)
+
+#         gemini_response.resolve()
+
+#         extracted_specific_info = []
+#         if gemini_response.candidates:
+#             for item in gemini_response.candidates[0].content.parts:
+#                 text = item.text
+#                 start_index = text.find("[") + 1  # Skip '['
+#                 end_index = text.rfind("]")  # Skip ']'
+#                 event_info = text[start_index:end_index]  # Extract the event info text
+#                 event_info = event_info.replace("/", "")  # Remove slashes
+#                 events = eval(event_info)  # Convert the string representation of list to actual list
+#                 for event in events:
+#                     parts = event.strip().strip("'").split(":")  # Adjusted to handle potential extra spaces and quotes
+#                     if len(parts) == 2:
+#                         event_name = parts[0].strip()
+#                         date = parts[1].strip().replace("/", "")  # Remove slashes from the date
+#                         date = date.lstrip("0") if date.startswith("0") else date  # Remove leading zeros from the date
+#                         extracted_specific_info.append(f"{event_name}:{date}")
+
+#         st.write("Extracted Specific Information:", extracted_specific_info)  # Print extracted specific information in the frontend
+#         return extracted_specific_info
+
+#     except Exception as e:
+#         st.error(f"Error extracting specific information from Gemini: {e}")
+#         return None
+
+
+# def extract_images_and_process(file, current_sheet):
+#     try:
+#         with zipfile.ZipFile(file, 'r') as zip_ref:
+#             media_folder = 'xl/media/'
+#             image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
+
+#             # Create the "images" subfolder if it doesn't exist
+#             os.makedirs("images", exist_ok=True)
+
+#             with pd.ExcelWriter("output_extracted_info.xlsx", engine='openpyxl') as writer:
+#                 for i, image_file in enumerate(image_files):
+#                     if i < len(current_sheet):  # Check if there are enough sheets for the images
+#                         sheet_name = current_sheet[i]
+
+#                         try:
+#                             img = Image.open(io.BytesIO(zip_ref.read(image_file)))
+#                             st.write("Processing Image:", image_file)  # Print processing image in the frontend
+#                             extracted_text = extract_text_from_image(img)
+#                             extracted_specific_info = extract_specific_information(extracted_text)
+
+#                             if extracted_specific_info:
+#                                 # Write the DataFrame to a separate sheet in the Excel file
+#                                 extracted_info_df = pd.DataFrame(extracted_specific_info, columns=["Event Name", "Date"])
+#                                 extracted_info_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+#                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
+#                                 st.write("Extracted Text:")
+#                                 st.write(extracted_text)
+#                                 st.write("Extracted Specific Information:")
+#                                 st.write(extracted_specific_info)
+#                             else:
+#                                 st.warning("No specific information extracted.")
+
+#                         except Exception as e:
+#                             st.error(f"Error processing sheet {sheet_name}: {e}")
+#                     else:
+#                         st.warning(f"Number of sheets is less than the number of images.")
+
+#             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
+
+#             # Provide a download link for the updated Excel file
+#             st.markdown(get_download_link("output_extracted_info.xlsx"), unsafe_allow_html=True)
+#     except Exception as e:
+#         st.error(f"Error: {e}")
+
+# def get_sheet_names_from_excel(file):
+#     try:
+#         xls = pd.ExcelFile(file)
+#         sheet_names = xls.sheet_names
+#         return sheet_names
+#     except Exception as e:
+#         st.error(f"Error getting sheet names: {e}")
+#         return None
+
+# def get_download_link(file_path):
+#     with open(file_path, "rb") as f:
+#         file_content = f.read()
+#     return f'<a href="data:application/octet-stream;base64,{base64.b64encode(file_content).decode()}" download="{file_path}">Download Excel File</a>'
+
+# def main():
+#     st.title("Excel Image and Information Extractor")
+#     file = st.file_uploader("Upload Excel file", type=["xlsx", "xls", "zip"])
+
+#     if file is not None:
+#         current_sheet = get_sheet_names_from_excel(file)
+#         extract_images_and_process(file, current_sheet)
+
+# if __name__ == "__main__":
+#     main()
+
+
+
+# import streamlit as st
+# import zipfile
+# from PIL import Image
+# import openpyxl
+# import os
+# import io
+# import base64
+# import pandas as pd
+# import google.generativeai as genai
+
+# # Set your API keys for both Google Gemini Vision Pro and Google Gemini
+# gemini_vision_pro_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+# gemini_pro_api_key = "Your_Gemini_Pro_API_Key"
+
+# # Configure Gemini APIs
+# genai.configure(api_key=gemini_vision_pro_api_key)
+# vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
+# gemini_model = genai.GenerativeModel('gemini-pro')
+
+# def extract_text_from_image(img):
+#     vision_pro_prompt = "Extract text from the provided image."
+#     with st.spinner("Extracting Text From The Image..."):
+#         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
+
+#     try:
+#         vision_pro_response.resolve()
+#         extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
+#         st.write("Extracted Text:", extracted_text)  # Print extracted text in the frontend
+#         return extracted_text
+#     except Exception as e:
+#         st.error(f"Error extracting text from image: {e}")
+#         return None
+
+# def extract_specific_information(extracted_text):
+#     try:
+#         gemini_prompt = """
+#             From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'. consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
+#             find a date. Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
+#             Each item should be a string & in each item event name & date should be separated by a colon ':'
+#             example:if the Extracted Text: Regulatory Timeline & Events Antitrust SEC All Other Items ACC SH Approval 08/04/2022 
+#             Walk Date 10/18/2022 Definitive Filed 06/16/2022 Expected Close 08/09/2022 Preliminary Proxy Filed 05/10/2022.
+#             response should be like this, ['ACC SH Approval:08-04-2022','Walk Date:10/18/2022','Definitive Filed:06/16/2022','Expected Close:08/09/2022'....]
+#             """
+#         with st.spinner("Extracting Specific Information From The Text ..."):
+#             gemini_response = gemini_model.generate_content([gemini_prompt, extracted_text])
+
+#         gemini_response.resolve()
+
+#         extracted_specific_info = []
+#         if gemini_response.candidates:
+#             for item in gemini_response.candidates[0].content.parts:
+#                 text = item.text
+#                 event_info = text.strip('[').strip(']').replace('\\', '').split(',')
+#                 for event in event_info:
+#                     parts = event.strip().strip("'").split(":")
+#                     if len(parts) == 2:
+#                         event_name = parts[0].strip()
+#                         date = parts[1].strip()
+#                         extracted_specific_info.append({"Event Name": event_name, "Date": date})
+
+#         st.write("Extracted Specific Information:", extracted_specific_info)  # Print extracted specific information in the frontend
+#         return extracted_specific_info
+
+#     except Exception as e:
+#         st.error(f"Error extracting specific information from Gemini: {e}")
+#         return None
+
+# def extract_images_and_process(file, current_sheet):
+#     try:
+#         with zipfile.ZipFile(file, 'r') as zip_ref:
+#             media_folder = 'xl/media/'
+#             image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
+
+#             # Create the "images" subfolder if it doesn't exist
+#             os.makedirs("images", exist_ok=True)
+
+#             with pd.ExcelWriter("output_extracted_info.xlsx", engine='openpyxl') as writer:
+#                 for i, image_file in enumerate(image_files):
+#                     if i < len(current_sheet):  # Check if there are enough sheets for the images
+#                         sheet_name = current_sheet[i]
+
+#                         try:
+#                             img = Image.open(io.BytesIO(zip_ref.read(image_file)))
+#                             st.write("Processing Image:", image_file)  # Print processing image in the frontend
+#                             extracted_text = extract_text_from_image(img)
+#                             extracted_specific_info = extract_specific_information(extracted_text)
+
+#                             if extracted_specific_info:
+#                                 # Write the DataFrame to a separate sheet in the Excel file
+#                                 extracted_info_df = pd.DataFrame(extracted_specific_info)
+#                                 extracted_info_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+#                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
+#                                 st.write("Extracted Text:")
+#                                 st.write(extracted_text)
+#                                 st.write("Extracted Specific Information:")
+#                                 st.write(extracted_specific_info)
+#                             else:
+#                                 st.warning("No specific information extracted.")
+
+#                         except Exception as e:
+#                             st.error(f"Error processing sheet {sheet_name}: {e}")
+#                     else:
+#                         st.warning(f"Number of sheets is less than the number of images.")
+
+#             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
+
+#             # Provide a download link for the updated Excel file
+#             st.markdown(get_download_link("output_extracted_info.xlsx"), unsafe_allow_html=True)
+#     except Exception as e:
+#         st.error(f"Error: {e}")
+
+# def get_sheet_names_from_excel(file):
+#     try:
+#         xls = pd.ExcelFile(file)
+#         sheet_names = xls.sheet_names
+#         return sheet_names
+#     except Exception as e:
+#         st.error(f"Error getting sheet names: {e}")
+#         return None
+
+# def get_download_link(file_path):
+#     with open(file_path, "rb") as f:
+#         file_content = f.read()
+#     return f'<a href="data:application/octet-stream;base64,{base64.b64encode(file_content).decode()}" download="{file_path}">Download Excel File</a>'
+
+# def main():
+#     st.title("Excel Image and Information Extractor")
+#     file = st.file_uploader("Upload Excel file", type=["xlsx", "xls", "zip"])
+
+#     if file is not None:
+#         current_sheet = get_sheet_names_from_excel(file)
+#         extract_images_and_process(file, current_sheet)
+
+# if __name__ == "__main__":
+#     main()
+
+
+
 import streamlit as st
 import zipfile
 from PIL import Image
@@ -1747,99 +2174,110 @@ import io
 import base64
 import pandas as pd
 import google.generativeai as genai
+import xlsxwriter
 
-# Set your API keys for Google Gemini Vision Pro
-gemini_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+# Set your API keys for both Google Gemini Vision Pro and Google Gemini
+gemini_vision_pro_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+gemini_pro_api_key = "Your_Gemini_Pro_API_Key"
 
-genai.configure(api_key=gemini_api_key)
+# Configure Gemini APIs
+genai.configure(api_key=gemini_vision_pro_api_key)
 vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
-
-# Declare image_sheet_mapping as a global variable
-image_sheet_mapping = {}
-
-def extract_image_from_zip(zip_ref, image_file):
-    image_data = zip_ref.read(image_file)
-    return Image.open(io.BytesIO(image_data))
+gemini_model = genai.GenerativeModel('gemini-pro')
 
 def extract_text_from_image(img):
-    vision_pro_prompt = """
-    Extract text from the image following these guidelines:
-- The table should contain three columns: 'Antitrust', 'SEC', and 'All Other Terms'.
-- Each cell definately contain | eventname & date |
-- Each row should consist of pairs of event names and dates, separated by '|' within each column.
-- If an event name or date is missing, leave the cell blank (use '| |' to represent an empty cell).
-- Example format:
-    |Antitrust          |SEC                  |All Other Terms             |
-    |event_name1 date1  |event_name2 date2    |event_name3 date3          |
-    |event_name4 date4  |                     |event_name5 date5          |
-    |                    |event_name6 date6    |event_name7 date7          |
-    |event_name8 date8  |event_name9 date9    |                           |
-    |                    |                     |event_name10 date10        |
-    |event_name11 date11|                     |                           |
-    """ 
+    vision_pro_prompt = "Extract text from the provided image."
     with st.spinner("Extracting Text From The Image..."):
         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
-        print(vision_pro_response)
 
     try:
         vision_pro_response.resolve()
-        extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
-        print(extracted_text)
-        return extracted_text
+        if vision_pro_response.candidates:
+            extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
+            st.write("Extracted Text:", extracted_text)  # Print extracted text in the frontend
+            return extracted_text
+        else:
+            st.error("No content extracted from the image.")
+            return None
     except Exception as e:
         st.error(f"Error extracting text from image: {e}")
         return None
 
-def extract_images_and_process(file, current_sheet):
+def extract_specific_information(extracted_text):
+    try:
+        gemini_prompt = """
+            From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'. consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
+            find a date. Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
+            Each item should be a string & in each item event name & date should be separated by a colon ':'
+            example:if the Extracted Text: Regulatory Timeline & Events Antitrust SEC All Other Items ACC SH Approval 08/04/2022 
+            Walk Date 10/18/2022 Definitive Filed 06/16/2022 Expected Close 08/09/2022 Preliminary Proxy Filed 05/10/2022.
+            response should be like this, ['ACC SH Approval:08/04/2022','Walk Date:10/18/2022','Definitive Filed:06/16/2022','Expected Close:08/09/2022'....]
+            """
+        with st.spinner("Extracting Specific Information From The Text ..."):
+            gemini_response = gemini_model.generate_content([gemini_prompt, extracted_text])
+
+        gemini_response.resolve()
+
+        extracted_specific_info = []
+        if gemini_response.candidates:
+            for item in gemini_response.candidates[0].content.parts:
+                text = item.text
+                event_info = text.strip('[').strip(']').replace('\\', '').split(',')
+                for event in event_info:
+                    parts = event.strip().strip("'").split(":")
+                    if len(parts) == 2:
+                        event_name = parts[0].strip()
+                        date = parts[1].strip()
+                        extracted_specific_info.append({"Event Name": event_name, "Date": date})
+
+        st.write("Extracted Specific Information:", extracted_specific_info)  # Print extracted specific information in the frontend
+        return extracted_specific_info
+
+    except Exception as e:
+        st.error(f"Error extracting specific information from Gemini: {e}")
+        return None
+
+def extract_images_and_process(file, current_sheet, image_files):
     try:
         with zipfile.ZipFile(file, 'r') as zip_ref:
-            media_folder = 'xl/media/'
-            image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
-
             # Create the "images" subfolder if it doesn't exist
             os.makedirs("images", exist_ok=True)
 
-            with pd.ExcelWriter("output_extracted_info.xlsx", engine='openpyxl') as writer:
-                for i, image_file in enumerate(image_files):
-                    if i < len(current_sheet):  # Check if there are enough sheets for the images
-                        sheet_name = current_sheet[i]
+            with pd.ExcelWriter("output_extracted_info.xlsx", engine='xlsxwriter') as writer:
+                workbook = writer.book
+                for sheet_name, image_file in zip(current_sheet, image_files):
+                    worksheet = workbook.add_worksheet(sheet_name)
 
-                        try:
-                            img = extract_image_from_zip(zip_ref, image_file)
-                            extracted_text = extract_text_from_image(img)
+                    try:
+                        img = Image.open(io.BytesIO(zip_ref.read(image_file)))
+                        st.write("Processing Image:", image_file)  # Print processing image in the frontend
+                        extracted_text = extract_text_from_image(img)
+                        if extracted_text:
+                            extracted_specific_info = extract_specific_information(extracted_text)
 
-                            # Split extracted text into rows and columns
-                            rows = extracted_text.split('\n')
-                            data = []
-                            for row in rows:
-                                if row.strip():  # Check if the row is not empty
-                                    columns = row.split('|')[1:-1]  # Remove first and last empty items
-                                    if len(columns) == 3:  # Ensure the correct number of columns
-                                        data.append(columns)
-                                    else:
-                                        st.warning(f"Skipping row with incorrect number of columns: {row}")
-
-
-                            # Write the DataFrame to a separate sheet in the Excel file
-                            if data:
-                                extracted_info_df = pd.DataFrame(data, columns=["Antitrust", "SEC", "All Other Terms"])
+                            if extracted_specific_info:
+                                # Write the DataFrame to a separate sheet in the Excel file
+                                extracted_info_df = pd.DataFrame(extracted_specific_info)
                                 extracted_info_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-                                # Insert the image into the Excel sheet at a specific location
-                                sheet = writer.sheets[sheet_name]
-                                img_ref = openpyxl.drawing.image.Image(f"images/{image_file.split('/')[-1]}")
-                                sheet.add_image(img_ref, 'F1')  # Adjust the location as needed
+                                # Save the image in the "images" folder
+                                img.save(f'images/{sheet_name}.png')
+
+                                # Insert the image into the worksheet
+                                worksheet.insert_image(0, 1, f'images/{sheet_name}.png', {'x_offset': 70, 'y_offset': 0})
 
                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
                                 st.write("Extracted Text:")
                                 st.write(extracted_text)
+                                st.write("Extracted Specific Information:")
+                                st.write(extracted_specific_info)
                             else:
-                                st.warning("No valid data extracted from the image.")
+                                st.warning("No specific information extracted.")
+                        else:
+                            st.warning("No text extracted from the image.")
 
-                        except Exception as e:
-                            st.error(f"Error processing sheet {sheet_name}: {e}")
-                    else:
-                        st.warning(f"Number of sheets is less than the number of images.")
+                    except Exception as e:
+                        st.error(f"Error processing sheet {sheet_name}: {e}")
 
             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
 
@@ -1857,6 +2295,9 @@ def get_sheet_names_from_excel(file):
         st.error(f"Error getting sheet names: {e}")
         return None
 
+
+
+
 def get_download_link(file_path):
     with open(file_path, "rb") as f:
         file_content = f.read()
@@ -1868,7 +2309,10 @@ def main():
 
     if file is not None:
         current_sheet = get_sheet_names_from_excel(file)
-        extract_images_and_process(file, current_sheet)
-        
+        with zipfile.ZipFile(file, 'r') as zip_ref:
+            media_folder = 'xl/media/'
+            image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
+        extract_images_and_process(file, current_sheet, image_files)
+
 if __name__ == "__main__":
     main()
