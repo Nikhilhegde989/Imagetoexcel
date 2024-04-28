@@ -2165,6 +2165,162 @@
 
 
 
+# import streamlit as st
+# import zipfile
+# from PIL import Image
+# import openpyxl
+# import os
+# import io
+# import base64
+# import pandas as pd
+# import google.generativeai as genai
+# import xlsxwriter
+
+# # Set your API keys for both Google Gemini Vision Pro and Google Gemini
+# gemini_vision_pro_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
+# gemini_pro_api_key = "Your_Gemini_Pro_API_Key"
+
+# # Configure Gemini APIs
+# genai.configure(api_key=gemini_vision_pro_api_key)
+# vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
+# gemini_model = genai.GenerativeModel('gemini-pro')
+
+# def extract_text_from_image(img):
+#     vision_pro_prompt = "Extract text from the provided image."
+#     with st.spinner("Extracting Text From The Image..."):
+#         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
+
+#     try:
+#         vision_pro_response.resolve()
+#         if vision_pro_response.candidates:
+#             extracted_text = " ".join(part.text for part in vision_pro_response.candidates[0].content.parts)
+#             st.write("Extracted Text:", extracted_text)  # Print extracted text in the frontend
+#             return extracted_text
+#         else:
+#             st.error("No content extracted from the image.")
+#             return None
+#     except Exception as e:
+#         st.error(f"Error extracting text from image: {e}")
+#         return None
+
+# def extract_specific_information(extracted_text):
+#     try:
+#         gemini_prompt = """
+#             From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'. consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
+#             find a date. Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
+#             Each item should be a string & in each item event name & date should be separated by a colon ':'
+#             example:if the Extracted Text: Regulatory Timeline & Events Antitrust SEC All Other Items ACC SH Approval 08/04/2022 
+#             Walk Date 10/18/2022 Definitive Filed 06/16/2022 Expected Close 08/09/2022 Preliminary Proxy Filed 05/10/2022.
+#             response should be like this, ['ACC SH Approval:08/04/2022','Walk Date:10/18/2022','Definitive Filed:06/16/2022','Expected Close:08/09/2022'....]
+#             """
+#         with st.spinner("Extracting Specific Information From The Text ..."):
+#             gemini_response = gemini_model.generate_content([gemini_prompt, extracted_text])
+
+#         gemini_response.resolve()
+
+#         extracted_specific_info = []
+#         if gemini_response.candidates:
+#             for item in gemini_response.candidates[0].content.parts:
+#                 text = item.text
+#                 event_info = text.strip('[').strip(']').replace('\\', '').split(',')
+#                 for event in event_info:
+#                     parts = event.strip().strip("'").split(":")
+#                     if len(parts) == 2:
+#                         event_name = parts[0].strip()
+#                         date = parts[1].strip()
+#                         extracted_specific_info.append({"Event Name": event_name, "Date": date})
+
+#         st.write("Extracted Specific Information:", extracted_specific_info)  # Print extracted specific information in the frontend
+#         return extracted_specific_info
+
+#     except Exception as e:
+#         st.error(f"Error extracting specific information from Gemini: {e}")
+#         return None
+
+# def extract_images_and_process(file, current_sheet, image_files):
+#     try:
+#         with zipfile.ZipFile(file, 'r') as zip_ref:
+#             # Create the "images" subfolder if it doesn't exist
+#             os.makedirs("images", exist_ok=True)
+
+#             with pd.ExcelWriter("output_extracted_info.xlsx", engine='xlsxwriter') as writer:
+#                 workbook = writer.book
+#                 for sheet_name, image_file in zip(current_sheet, image_files):
+#                     worksheet = workbook.add_worksheet(sheet_name)
+
+#                     try:
+#                         img = Image.open(io.BytesIO(zip_ref.read(image_file)))
+#                         st.write("Processing Image:", image_file)  # Print processing image in the frontend
+#                         extracted_text = extract_text_from_image(img)
+#                         if extracted_text:
+#                             extracted_specific_info = extract_specific_information(extracted_text)
+
+#                             if extracted_specific_info:
+#                                 # Write the DataFrame to a separate sheet in the Excel file
+#                                 extracted_info_df = pd.DataFrame(extracted_specific_info)
+#                                 extracted_info_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+#                                 # Save the image in the "images" folder
+#                                 img.save(f'images/{sheet_name}.png')
+
+#                                 # Insert the image into the worksheet
+#                                 worksheet.insert_image(0, 1, f'images/{sheet_name}.png', {'x_offset': 70, 'y_offset': 0})
+
+#                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
+#                                 st.write("Extracted Text:")
+#                                 st.write(extracted_text)
+#                                 st.write("Extracted Specific Information:")
+#                                 st.write(extracted_specific_info)
+#                             else:
+#                                 st.warning("No specific information extracted.")
+#                         else:
+#                             st.warning("No text extracted from the image.")
+
+#                     except Exception as e:
+#                         st.error(f"Error processing sheet {sheet_name}: {e}")
+
+#             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
+
+#             # Provide a download link for the updated Excel file
+#             st.markdown(get_download_link("output_extracted_info.xlsx"), unsafe_allow_html=True)
+#     except Exception as e:
+#         st.error(f"Error: {e}")
+
+# def get_sheet_names_from_excel(file):
+#     try:
+#         xls = pd.ExcelFile(file)
+#         sheet_names = xls.sheet_names
+#         return sheet_names
+#     except Exception as e:
+#         st.error(f"Error getting sheet names: {e}")
+#         return None
+
+
+
+
+# def get_download_link(file_path):
+#     with open(file_path, "rb") as f:
+#         file_content = f.read()
+#     return f'<a href="data:application/octet-stream;base64,{base64.b64encode(file_content).decode()}" download="{file_path}">Download Excel File</a>'
+
+# def main():
+#     st.title("Excel Image and Information Extractor")
+#     file = st.file_uploader("Upload Excel file", type=["xlsx", "xls", "zip"])
+
+#     if file is not None:
+#         current_sheet = get_sheet_names_from_excel(file)
+#         st.write("Sheets in Excel File:", current_sheet)  # Debugging output to check sheet names
+#         with zipfile.ZipFile(file, 'r') as zip_ref:
+#             media_folder = 'xl/media/'
+#             image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
+#         extract_images_and_process(file, current_sheet, image_files)
+
+
+# if __name__ == "__main__":
+#     main()
+
+
+
 import streamlit as st
 import zipfile
 from PIL import Image
@@ -2175,6 +2331,7 @@ import base64
 import pandas as pd
 import google.generativeai as genai
 import xlsxwriter
+import asyncio
 
 # Set your API keys for both Google Gemini Vision Pro and Google Gemini
 gemini_vision_pro_api_key = "AIzaSyAFER-GEGVy5Cw9E-vkCIjyjvW-Bc4pBZ8"
@@ -2185,7 +2342,7 @@ genai.configure(api_key=gemini_vision_pro_api_key)
 vision_pro_model = genai.GenerativeModel('gemini-pro-vision')
 gemini_model = genai.GenerativeModel('gemini-pro')
 
-def extract_text_from_image(img):
+async def extract_text_from_image(img):
     vision_pro_prompt = "Extract text from the provided image."
     with st.spinner("Extracting Text From The Image..."):
         vision_pro_response = vision_pro_model.generate_content([vision_pro_prompt, img])
@@ -2203,41 +2360,54 @@ def extract_text_from_image(img):
         st.error(f"Error extracting text from image: {e}")
         return None
 
-def extract_specific_information(extracted_text):
+async def extract_specific_information(extracted_text):
     try:
         gemini_prompt = """
-            From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'. consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
-            find a date. Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
+            From the entire text, first search for the word/section 'Regulatory Timeline & Events' and 'Antitrust' and 'SEC' and 'All other terms'.consider this as the starting point, forget everything which are behind this. From that, extract the event name & date. Event name will be everything until you 
+            find a date.Example event name 'ACC SH Approval' date '08/04/2022'. Give response in array format.
             Each item should be a string & in each item event name & date should be separated by a colon ':'
             example:if the Extracted Text: Regulatory Timeline & Events Antitrust SEC All Other Items ACC SH Approval 08/04/2022 
             Walk Date 10/18/2022 Definitive Filed 06/16/2022 Expected Close 08/09/2022 Preliminary Proxy Filed 05/10/2022.
             response should be like this, ['ACC SH Approval:08/04/2022','Walk Date:10/18/2022','Definitive Filed:06/16/2022','Expected Close:08/09/2022'....]
+            no response should be empty
+            resposne should definately contain informations should match strictly the above structure because im parsing it according to it only.remove unnecessary characters,dont add any comments etc
             """
+    
         with st.spinner("Extracting Specific Information From The Text ..."):
             gemini_response = gemini_model.generate_content([gemini_prompt, extracted_text])
 
         gemini_response.resolve()
-
-        extracted_specific_info = []
+        print(gemini_response.candidates[0].content.parts)
         if gemini_response.candidates:
+            extracted_specific_info = []
             for item in gemini_response.candidates[0].content.parts:
                 text = item.text
+                if text.startswith("-"):
+                    text = text[1:].strip()  # Remove the "-" character
+
                 event_info = text.strip('[').strip(']').replace('\\', '').split(',')
                 for event in event_info:
                     parts = event.strip().strip("'").split(":")
                     if len(parts) == 2:
                         event_name = parts[0].strip()
                         date = parts[1].strip()
-                        extracted_specific_info.append({"Event Name": event_name, "Date": date})
+                        
+                        month, day, year = date.split('/')
+                        formatted_date = f"{day}/{month}/{year}"
 
-        st.write("Extracted Specific Information:", extracted_specific_info)  # Print extracted specific information in the frontend
-        return extracted_specific_info
+                        extracted_specific_info.append({"Event Name": event_name, "Date": formatted_date})
+
+            st.write("Extracted Specific Information:", extracted_specific_info)  # Debug statement
+            return extracted_specific_info
+        else:
+            st.warning("No candidates found in Gemini response.")
+            return None
 
     except Exception as e:
         st.error(f"Error extracting specific information from Gemini: {e}")
         return None
 
-def extract_images_and_process(file, current_sheet, image_files):
+async def extract_images_and_process(file, current_sheet, image_files):
     try:
         with zipfile.ZipFile(file, 'r') as zip_ref:
             # Create the "images" subfolder if it doesn't exist
@@ -2251,9 +2421,13 @@ def extract_images_and_process(file, current_sheet, image_files):
                     try:
                         img = Image.open(io.BytesIO(zip_ref.read(image_file)))
                         st.write("Processing Image:", image_file)  # Print processing image in the frontend
-                        extracted_text = extract_text_from_image(img)
+                        
+                        # Run extraction tasks concurrently
+                        text_task = asyncio.create_task(extract_text_from_image(img))
+                        extracted_text = await text_task
                         if extracted_text:
-                            extracted_specific_info = extract_specific_information(extracted_text)
+                            specific_info_task = asyncio.create_task(extract_specific_information(extracted_text))
+                            extracted_specific_info = await specific_info_task
 
                             if extracted_specific_info:
                                 # Write the DataFrame to a separate sheet in the Excel file
@@ -2267,10 +2441,8 @@ def extract_images_and_process(file, current_sheet, image_files):
                                 worksheet.insert_image(0, 1, f'images/{sheet_name}.png', {'x_offset': 70, 'y_offset': 0})
 
                                 st.image(img, caption=f"Sheet Name: {sheet_name}, Image File: {image_file}", use_column_width=True)
-                                st.write("Extracted Text:")
-                                st.write(extracted_text)
-                                st.write("Extracted Specific Information:")
-                                st.write(extracted_specific_info)
+                                # st.write("Extracted Specific Information:")
+                                # st.write(extracted_specific_info)
                             else:
                                 st.warning("No specific information extracted.")
                         else:
@@ -2279,6 +2451,7 @@ def extract_images_and_process(file, current_sheet, image_files):
                     except Exception as e:
                         st.error(f"Error processing sheet {sheet_name}: {e}")
 
+            
             st.success("Processing completed. You can download the updated Excel file with extracted information below.")
 
             # Provide a download link for the updated Excel file
@@ -2295,13 +2468,11 @@ def get_sheet_names_from_excel(file):
         st.error(f"Error getting sheet names: {e}")
         return None
 
-
-
-
 def get_download_link(file_path):
     with open(file_path, "rb") as f:
         file_content = f.read()
     return f'<a href="data:application/octet-stream;base64,{base64.b64encode(file_content).decode()}" download="{file_path}">Download Excel File</a>'
+
 
 def main():
     st.title("Excel Image and Information Extractor")
@@ -2309,10 +2480,11 @@ def main():
 
     if file is not None:
         current_sheet = get_sheet_names_from_excel(file)
+        st.write("Sheets in Excel File:", current_sheet)  # Debugging output to check sheet names
         with zipfile.ZipFile(file, 'r') as zip_ref:
             media_folder = 'xl/media/'
             image_files = [name for name in zip_ref.namelist() if name.startswith(media_folder)]
-        extract_images_and_process(file, current_sheet, image_files)
+        asyncio.run(extract_images_and_process(file, current_sheet, image_files))
 
 if __name__ == "__main__":
     main()
